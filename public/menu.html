@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menu — Café</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/menu.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="logo">← Home</a>
+    <nav class="nav-links">
+      <a href="/menu.html" class="active">Menu</a>
+      <a href="/orders.html">Orders</a>
+      <a href="/cart.html" class="cart-badge">Cart <span style="display:none">0</span></a>
+    </nav>
+  </header>
+
+  <main class="menu-page page-main">
+    <div class="menu-header-zone">
+      <header class="menu-header">
+        <div class="menu-header-top">
+          <div class="menu-header-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" opacity="0.35"/>
+              <path d="M22 18v28M22 18c0-3 1.5-5 3.5-5s3.5 2 3.5 5v10c0 2.5-1.5 4-3.5 4s-3.5-1.5-3.5-4V18z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M42 18v28M42 18c0-3-1.5-5-3.5-5s-3.5 2-3.5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M38.5 18c0-3 1.5-5 3.5-5s3.5 2 3.5 5v14c0 4-2 7-3.5 7s-3.5-3-3.5-7V18z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 38h36" stroke="currentColor" stroke-width="1" opacity="0.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="menu-header-tagline">Crafted with care</p>
+        </div>
+        <h1 class="menu-header-title">Menu</h1>
+      </header>
+    </div>
+
+    <div class="menu-categories" id="categoryPills"></div>
+    <div class="menu-grid" id="menuGrid">
+      <p class="menu-empty">Loading menu…</p>
+    </div>
+  </main>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/menu.js"></script>
+</body>
+</html>

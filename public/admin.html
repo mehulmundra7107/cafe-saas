@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Café</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin-body">
+  <div id="loginScreen" class="admin-login">
+    <div class="glass">
+      <h1>Admin Panel</h1>
+      <p>Sign in to manage orders and menu</p>
+      <p class="error" id="loginError">Incorrect password</p>
+      <form id="loginForm">
+        <input type="password" id="adminPassword" placeholder="Password" required autocomplete="current-password" />
+        <button type="submit" class="btn btn-primary">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="adminShell" class="admin-shell">
+    <div class="admin-topbar">
+      <h1>Café Admin</h1>
+      <button class="btn btn-ghost" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-panel="ordersPanel">Orders</button>
+      <button class="admin-tab" data-panel="menuPanel">Menu & Photos</button>
+      <button class="admin-tab" data-panel="tablesPanel">Tables & QR</button>
+    </div>
+
+    <!-- Orders panel -->
+    <div id="ordersPanel" class="admin-panel active">
+      <div id="waiterAlerts"></div>
+
+      <div class="order-filter-bar glass" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem; padding:1rem; margin-bottom:1rem; border-radius:12px;">
+        <button class="btn btn-ghost filter-quick-btn active" data-range="today">Today</button>
+        <button class="btn btn-ghost filter-quick-btn" data-range="week">This Week</button>
+        <button class="btn btn-ghost filter-quick-btn" data-range="month">This Month</button>
+        <button class="btn btn-ghost" id="openCalendarBtn">📅 Pick a Date</button>
+        <button class="btn btn-ghost" id="openCustomRangeBtn">Custom Range</button>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
+          <span id="orderFilterSummary" style="font-size:0.9rem; color:var(--text-muted); margin-right:0.5rem;"></span>
+          <button class="btn btn-primary" id="exportCsvBtn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Export CSV</button>
+          <button class="btn btn-primary" id="exportPdfBtn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Export PDF</button>
+        </div>
+      </div>
+
+      <div id="calendarPopover" class="glass" style="display:none; position:absolute; z-index:50; padding:1rem; border-radius:12px; margin-bottom:1rem;"></div>
+
+      <div id="customRangePopover" class="glass" style="display:none; padding:1rem; border-radius:12px; margin-bottom:1rem; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        <label>From <input type="date" id="customFromInput" /></label>
+        <label>To <input type="date" id="customToInput" /></label>
+        <button class="btn btn-primary" id="applyCustomRangeBtn">Apply</button>
+        <button class="btn btn-ghost" id="closeCustomRangeBtn" style="margin-left:auto; padding:0.25rem 0.5rem;">×</button>
+      </div>
+
+      <div class="orders-list" id="ordersList">
+        <p class="empty-state">Loading orders…</p>
+      </div>
+    </div>
+
+    <!-- Menu management panel -->
+    <div id="menuPanel" class="admin-panel">
+      <form id="cafeInfoForm" class="admin-form glass cafe-info-form">
+        <h3>Café Information</h3>
+        <div class="form-grid">
+          <label class="full">Name<input type="text" id="cafeNameInput" required /></label>
+          <label class="full">Short intro (hero)<textarea id="introShortInput" rows="2"></textarea></label>
+          <label class="full">Full intro<textarea id="introFullInput" rows="3"></textarea></label>
+          <label>Phone<input type="text" id="phoneInput" /></label>
+          <label>Email<input type="email" id="emailInput" /></label>
+          <label>Address<input type="text" id="addressInput" /></label>
+          <label>Hours<input type="text" id="hoursInput" /></label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem">Save Info</button>
+      </form>
+
+      <div class="admin-form glass">
+        <h3>Homepage Carousel Photos</h3>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem">These photos auto-scroll on the user homepage.</p>
+        <div class="hero-photos-grid" id="heroPhotosGrid"></div>
+        <form id="heroPhotoForm" style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+          <input type="file" id="heroPhotoInput" accept="image/*" required />
+          <button type="submit" class="btn btn-primary">Add Photo</button>
+        </form>
+      </div>
+
+      <form id="menuForm" class="admin-form glass">
+        <h3 id="menuFormTitle">Add Menu Item</h3>
+        <input type="hidden" id="editItemId" />
+        <div class="form-grid">
+          <label>Name<input type="text" id="itemName" required /></label>
+          <label>Price ($)<input type="number" id="itemPrice" step="0.01" min="0" required /></label>
+          <label>Category<input type="text" id="itemCategory" placeholder="e.g. Beverages" /></label>
+          <label class="full">Description<textarea id="itemDesc"></textarea></label>
+          <label class="full">Photo<input type="file" id="itemImage" accept="image/*" /></label>
+          <label style="flex-direction:row;align-items:center;gap:0.5rem">
+            <input type="checkbox" id="itemAvailable" checked /> Visible on menu
+          </label>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:1rem">
+          <button type="submit" class="btn btn-primary">Save Item</button>
+          <button type="button" class="btn btn-ghost" id="resetMenuForm">Clear</button>
+        </div>
+      </form>
+
+      <h3 style="font-family:var(--font-display);color:var(--gold-light);margin-bottom:1rem">Current Menu</h3>
+      <div class="admin-menu-list" id="adminMenuList"></div>
+    </div>
+
+    <!-- Tables & QR panel -->
+    <div id="tablesPanel" class="admin-panel">
+      <h3 style="font-family:var(--font-display);color:var(--gold-light);margin-bottom:1rem">Live Table Occupancy</h3>
+      
+      <form id="addTableForm" style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <input type="text" id="newTableId" placeholder="Table ID (e.g. 11)" required style="flex:1; min-width:140px;" />
+        <input type="text" id="newTableLabel" placeholder="Label (e.g. Terrace 1)" style="flex:1; min-width:140px;" />
+        <button type="submit" class="btn btn-primary">Add Table</button>
+      </form>
+
+      <div class="admin-menu-list" id="adminTablesList">
+        <p class="empty-state">Loading tables...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/admin-tables.js"></script>
+  <script src="/js/admin-calendar.js"></script>
+</body>
+</html>

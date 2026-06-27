@@ -1,0 +1,337 @@
+.menu-page {
+  padding: 0 1.25rem 4rem;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(201, 169, 98, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(201, 169, 98, 0.06) 0%, transparent 50%),
+    var(--bg-dark);
+}
+
+.menu-page.page-main {
+  padding-top: 4.25rem;
+}
+
+.menu-header-zone {
+  padding: 0.65rem 0 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.menu-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-header-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.menu-header-icon {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  background: rgba(201, 169, 98, 0.08);
+  border: 1px solid rgba(201, 169, 98, 0.28);
+  border-radius: 50%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.menu-header-icon svg {
+  width: 44px;
+  height: 44px;
+}
+
+.menu-header-tagline {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0 0.5rem;
+  position: relative;
+}
+
+.menu-header-tagline::before,
+.menu-header-tagline::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 2.5rem;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 169, 98, 0.45));
+}
+
+.menu-header-tagline::before {
+  right: 100%;
+  margin-right: 0.75rem;
+  background: linear-gradient(to left, transparent, rgba(201, 169, 98, 0.45));
+}
+
+.menu-header-tagline::after {
+  left: 100%;
+  margin-left: 0.75rem;
+}
+
+.menu-header-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 9vw, 3.75rem);
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  margin: 1.15rem 0 0;
+  line-height: 1;
+}
+
+.menu-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.category-pill {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-pill.active,
+.category-pill:hover {
+  background: var(--glass);
+  color: var(--gold-light);
+  border-color: rgba(201, 169, 98, 0.4);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.menu-card {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.menu-card-image {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.menu-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-card-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.menu-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.menu-card-top h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.menu-price {
+  font-weight: 600;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.menu-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  flex: 1;
+}
+
+.menu-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.custom-note-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+}
+
+.custom-note-input::placeholder {
+  color: rgba(250, 247, 242, 0.4);
+}
+
+.add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qty-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.qty-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--glass);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-value {
+  min-width: 24px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.add-row .btn {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+}
+
+.menu-empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 380px) {
+  .menu-header-tagline::before,
+  .menu-header-tagline::after {
+    display: none;
+  }
+}
+
+@media (min-width: 600px) {
+  .menu-page.page-main {
+    padding-top: 4.5rem;
+  }
+
+  .menu-header-zone {
+    padding: 0.75rem 0 1.75rem;
+  }
+
+  .menu-header-icon {
+    width: 84px;
+    height: 84px;
+  }
+
+  .menu-header-icon svg {
+    width: 50px;
+    height: 50px;
+  }
+
+  .menu-header-title {
+    margin-top: 1.35rem;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 1100px;
+  }
+
+  .menu-card {
+    grid-template-columns: 120px 1fr;
+  }
+
+  .menu-card-image {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+.out-of-stock .menu-card-image img {
+  filter: grayscale(100%) opacity(0.6);
+}
+
+.menu-card-image {
+  position: relative;
+}
+
+.out-of-stock-tag {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--danger);
+  color: white;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.out-of-stock .menu-card-top h3,
+.out-of-stock .menu-price,
+.out-of-stock .menu-desc {
+  opacity: 0.6;
+}

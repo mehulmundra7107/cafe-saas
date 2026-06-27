@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Super Admin Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <style>
+    body { display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .login-box { width: 320px; padding: 2rem; border-radius: 12px; }
+    .login-box input { width: 100%; margin-bottom: 1rem; }
+    .login-box button { width: 100%; }
+    .error-text { color: #ff6b6b; font-size: 0.85rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body class="admin-body">
+  <div id="loginScreen" class="admin-login" style="display:flex;">
+  <div class="login-box glass">
+    <h2 style="margin-bottom: 1.5rem;">Super Admin</h2>
+    <input type="password" id="superAdminKeyInput" placeholder="Platform secret key" />
+    <button class="btn btn-primary" id="loginBtn">Log In</button>
+    <p class="error-text" id="loginError" style="display:none;"></p>
+  </div>
+
+  <script>
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const key = document.getElementById("superAdminKeyInput").value.trim();
+      const errorEl = document.getElementById("loginError");
+      errorEl.style.display = "none";
+
+      if (!key) return;
+
+      try {
+        const res = await fetch("/api/super-admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key }),
+        });
+        if (!res.ok) throw new Error("Invalid key");
+
+        sessionStorage.setItem("superAdminKey", key);
+        window.location.href = "/super-admin-dashboard.html";
+      } catch (err) {
+        errorEl.textContent = "Incorrect key. Please try again.";
+        errorEl.style.display = "block";
+      }
+    });
+
+    document.getElementById("superAdminKeyInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("loginBtn").click();
+    });
+  </script>
+</body>
+</html>

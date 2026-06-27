@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orders — Café</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/orders.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="logo">← Home</a>
+    <nav class="nav-links">
+      <a href="/menu.html">Menu</a>
+      <a href="/orders.html" class="active">Orders</a>
+      <a href="/cart.html" class="cart-badge">Cart <span style="display:none">0</span></a>
+    </nav>
+  </header>
+
+  <main class="orders-page page-main">
+    <h1 class="section-title" style="text-align: center;">Your Orders</h1>
+    <p class="section-sub" style="text-align: center;">Table <span id="tableLabel"></span></p>
+
+    <div id="noOrdersMessage" class="cart-empty" style="display:none">
+      <p>You haven't placed any orders yet.</p>
+      <a href="/menu.html" class="btn btn-primary">Browse Menu</a>
+    </div>
+
+    <div id="ordersList" class="orders-list"></div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/utils.js"></script>
+  <script>
+    document.getElementById("tableLabel").textContent = getTableNumber();
+  </script>
+  <script src="/js/orders.js"></script>
+</body>
+</html>

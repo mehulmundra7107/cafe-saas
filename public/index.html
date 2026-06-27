@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Café</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/home.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a href="/" class="logo" id="headerLogo">Café</a>
+    <nav class="nav-links">
+      <a href="/menu.html">Menu</a>
+      <a href="/orders.html">Orders</a>
+      <a href="/cart.html" class="cart-badge">Cart <span style="display:none">0</span></a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-carousel">
+      <div class="hero-track" id="heroTrack"></div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-intro glass-strong">
+        <h1 id="cafeName">Loading…</h1>
+        <p id="introShort"></p>
+        <span class="table-badge" id="tableBadge">Table 1</span>
+      </div>
+
+      <div class="hero-actions">
+        <a href="/menu.html" class="btn btn-primary">View Menu</a>
+        <a href="#about" class="btn btn-ghost">Learn More</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section" id="about">
+    <h2 class="section-title" style="text-align:center;padding:0 1.25rem">Our Story</h2>
+    <div class="glass">
+      <p id="introFull"></p>
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact">
+    <h2 class="section-title" style="text-align:center;padding:0 1.25rem">Visit Us</h2>
+    <div class="glass">
+      <div class="contact-grid">
+        <div class="contact-item">
+          <span class="icon">📞</span>
+          <div>
+            <strong>Phone</strong>
+            <span id="contactPhone"></span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <span class="icon">✉️</span>
+          <div>
+            <strong>Email</strong>
+            <span id="contactEmail"></span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <span class="icon">📍</span>
+          <div>
+            <strong>Address</strong>
+            <span id="contactAddress"></span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <span class="icon">🕐</span>
+          <div>
+            <strong>Hours</strong>
+            <span id="contactHours"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/utils.js"></script>
+  <script src="/js/home.js"></script>
+</body>
+</html>

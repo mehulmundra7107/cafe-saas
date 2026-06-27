@@ -1,0 +1,100 @@
+.orders-page {
+  padding-bottom: 4rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Order status panels */
+
+.order-status-panel {
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.status-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.order-status-panel h2 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.order-status-panel.pending h2 { color: var(--gold-light); }
+.order-status-panel.accepted h2,
+.order-status-panel.preparing h2 { color: var(--success); }
+.order-status-panel.rejected h2 { color: var(--danger); }
+
+.order-status-panel p {
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.order-items-list {
+  text-align: left;
+  background: var(--glass-strong);
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+}
+
+.order-item-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--glass-border);
+  font-size: 1.1rem;
+  color: var(--gold-light);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--glass-border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.waiter-btn {
+  margin-top: 0.5rem;
+}
+
+.order-id {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+}
+
+.cart-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--text-muted);
+}
+
+.cart-empty .btn {
+  margin-top: 1.5rem;
+}

@@ -1,0 +1,23 @@
+{
+  "name": "cafe-ordering",
+  "version": "1.0.0",
+  "description": "Cafeteria QR ordering system — user and admin",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "db:migrate": "node server/db/migrate.js",
+    "db:seed-from-json": "node server/db/migrate-data-from-json.js",
+    "db:migrate-multi-tenant": "node server/db/migrate-add-cafe-id.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
+    "multer": "^1.4.5-lts.1",
+    "pdfkit": "^0.19.1",
+    "pg": "^8.22.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0"
+  }
+}
