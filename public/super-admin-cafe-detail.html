@@ -10,6 +10,11 @@
   <link rel="stylesheet" href="/css/admin.css" />
 </head>
 <body class="admin-body">
+  <div id="superAdminGate" style="display:flex; align-items:center; justify-content:center; height:100vh;">
+    <p style="color: var(--text-muted);">Checking your session…</p>
+  </div>
+
+  <div id="superAdminShell" style="display:none;">
   <div class="admin-shell active">
     <div class="admin-topbar">
     <a href="/super-admin-dashboard.html" class="btn btn-ghost">← Back to Dashboard</a>
@@ -20,6 +25,7 @@
       <p class="empty-state">Loading café details…</p>
     </div>
   </div> <!-- admin-shell end -->
+  </div> <!-- superAdminShell end -->
 
   <script src="/js/super-admin-detail.js"></script>
 </body>

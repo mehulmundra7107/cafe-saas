@@ -1,9 +1,5 @@
 function getSuperAdminKey() {
-  const key = sessionStorage.getItem("superAdminKey");
-  if (!key) {
-    window.location.href = "/super-admin-login.html";
-  }
-  return key;
+  return sessionStorage.getItem("superAdminKey");
 }
 
 function superAdminHeaders() {
@@ -87,7 +83,6 @@ document.getElementById("addCafeForm")?.addEventListener("submit", async (e) => 
     document.getElementById("addCafeForm").reset();
 
     document.getElementById("newCafeSlugDisplay").textContent = newCafe.slug;
-    document.getElementById("newCafeKeyDisplay").textContent = newCafe.adminKey;
     document.getElementById("newCafeCredentialsModal").style.display = "block";
 
     loadCafesList();
@@ -101,7 +96,36 @@ document.getElementById("closeCredentialsModalBtn")?.addEventListener("click", (
   document.getElementById("newCafeCredentialsModal").style.display = "none";
 });
 
+async function gateSuperAdminPage() {
+  const key = getSuperAdminKey();
+
+  if (!key) {
+    window.location.href = "/super-admin-login.html";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/super-admin/platform-stats", {
+      headers: { "x-super-admin-key": key },
+    });
+
+    if (!res.ok) {
+      sessionStorage.removeItem("superAdminKey");
+      window.location.href = "/super-admin-login.html";
+      return;
+    }
+
+    document.getElementById("superAdminGate").style.display = "none";
+    document.getElementById("superAdminShell").style.display = "block";
+
+    loadPlatformStats();
+    loadCafesList();
+  } catch (err) {
+    console.error("Could not verify super admin session", err);
+    window.location.href = "/super-admin-login.html";
+  }
+}
+
 if (document.getElementById("statsGrid")) {
-  loadPlatformStats();
-  loadCafesList();
+  gateSuperAdminPage();
 }

@@ -153,4 +153,27 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  document.getElementById("resetAllQrBtn")?.addEventListener("click", async () => {
+    if (!confirm(
+      "This will invalidate EVERY table's current QR code for this café. " +
+      "Any printed QR codes currently in use will stop working immediately, " +
+      "and you will need to print new ones. Continue?"
+    )) return;
+
+    try {
+      const res = await fetch("/api/admin/tables/reset-all-qr", {
+        method: "POST",
+        headers: adminHeaders(),
+      });
+      if (!res.ok) throw new Error("Failed to reset QR codes");
+
+      const data = await res.json();
+      alert(`Successfully reset ${data.count} table QR code(s). Reloading the list now.`);
+      loadAdminTables();
+    } catch (err) {
+      console.error(err);
+      alert("Could not reset QR codes. Please try again.");
+    }
+  });
 });

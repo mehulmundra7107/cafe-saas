@@ -8,12 +8,16 @@ function adminHeaders(json = true) {
 }
 
 async function checkAuth() {
-  if (!adminKey) return false;
+  if (!adminKey) return { ok: false, error: "No key" };
   try {
     const res = await fetch("/api/admin/check", { headers: adminHeaders() });
-    return res.ok;
-  } catch {
-    return false;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { ok: false, error: data.error || "Incorrect password" };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: "Network error connecting to server" };
   }
 }
 
@@ -28,11 +32,22 @@ function showAdmin() {
 }
 
 async function login(password) {
+  const btn = document.querySelector("#loginForm button");
+  const originalText = btn.textContent;
+  btn.textContent = "Connecting to database...";
+  btn.disabled = true;
+
   adminKey = password;
-  const ok = await checkAuth();
-  if (!ok) {
+  const result = await checkAuth();
+  
+  btn.textContent = originalText;
+  btn.disabled = false;
+
+  if (!result.ok) {
     adminKey = "";
-    document.getElementById("loginError").style.display = "block";
+    const errorEl = document.getElementById("loginError");
+    errorEl.textContent = result.error;
+    errorEl.style.display = "block";
     return;
   }
   sessionStorage.setItem("admin_key", adminKey);

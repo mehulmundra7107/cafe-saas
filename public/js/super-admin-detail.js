@@ -1,7 +1,5 @@
 function getSuperAdminKey() {
-  const key = sessionStorage.getItem("superAdminKey");
-  if (!key) window.location.href = "/super-admin-login.html";
-  return key;
+  return sessionStorage.getItem("superAdminKey");
 }
 function superAdminHeaders() {
   return { "x-super-admin-key": getSuperAdminKey() };
@@ -38,7 +36,6 @@ async function loadCafeDetail() {
 
     <div style="display:flex; gap:0.5rem; margin:1rem 0;">
       <button class="btn btn-ghost" id="toggleActiveBtn">${cafe.isActive ? "Deactivate" : "Activate"} Café</button>
-      <button class="btn btn-ghost" id="resetKeyBtn">Reset Admin Key</button>
     </div>
 
     <div class="stats-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0;">
@@ -69,15 +66,36 @@ async function loadCafeDetail() {
     loadCafeDetail();
   });
 
-  document.getElementById("resetKeyBtn").addEventListener("click", async () => {
-    if (!confirm("This will invalidate the café's current admin login. Continue?")) return;
-    const res = await fetch(`/api/super-admin/cafes/${id}/reset-admin-key`, {
-      method: "POST",
-      headers: superAdminHeaders(),
-    });
-    const updated = await res.json();
-    alert(`New admin key for this café:\n\n${updated.adminKey}\n\nShare this with the café owner — it will not be shown again.`);
-  });
+
 }
 
-loadCafeDetail();
+async function gateSuperAdminPage() {
+  const key = getSuperAdminKey();
+
+  if (!key) {
+    window.location.href = "/super-admin-login.html";
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/super-admin/platform-stats", {
+      headers: { "x-super-admin-key": key },
+    });
+
+    if (!res.ok) {
+      sessionStorage.removeItem("superAdminKey");
+      window.location.href = "/super-admin-login.html";
+      return;
+    }
+
+    document.getElementById("superAdminGate").style.display = "none";
+    document.getElementById("superAdminShell").style.display = "block";
+
+    loadCafeDetail();
+  } catch (err) {
+    console.error("Could not verify super admin session", err);
+    window.location.href = "/super-admin-login.html";
+  }
+}
+
+gateSuperAdminPage();

@@ -10,6 +10,11 @@
   <link rel="stylesheet" href="/css/admin.css" />
 </head>
 <body class="admin-body">
+  <div id="superAdminGate" style="display:flex; align-items:center; justify-content:center; height:100vh;">
+    <p style="color: var(--text-muted);">Checking your session…</p>
+  </div>
+
+  <div id="superAdminShell" style="display:none;">
   <div class="admin-shell active">
     <div class="admin-topbar">
     <h1>Platform Dashboard</h1>
@@ -46,14 +51,14 @@
   <div id="newCafeCredentialsModal" class="modal-overlay" style="display:none;">
     <div class="modal glass" style="max-width:420px; margin:10vh auto; padding:1.5rem; border-radius:12px;">
       <h3>Café Created</h3>
-      <p>Share these details with the café owner. The admin key is shown only once.</p>
+      <p>Share these details with the café owner.</p>
       <p><strong>Slug:</strong> <span id="newCafeSlugDisplay"></span></p>
-      <p><strong>Admin Key:</strong> <code id="newCafeKeyDisplay"></code></p>
       <button class="btn btn-primary" id="closeCredentialsModalBtn">Done</button>
     </div>
   </div>
 
   </div> <!-- admin-shell end -->
+  </div> <!-- superAdminShell end -->
   <script src="/js/super-admin.js"></script>
 </body>
 </html>

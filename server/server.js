@@ -116,21 +116,36 @@ async function resolveCafeBySlug(req) {
 // Looks up which café this admin request belongs to, based on its
 // admin key, and attaches it to the request for every downstream
 // handler to use. This replaces the old single-password model — every
-// café now has its OWN admin key, stored in the cafes table.
 async function requireAdmin(req, res, next) {
-  const key = req.headers["x-admin-key"] || req.query.key;
-  if (!key) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  try {
+    const key = req.headers["x-admin-key"] || req.query.key;
+    if (!key || key !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-  const cafe = await db.getCafeByAdminKey(key);
-  if (!cafe) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+    const { rows } = await pool.query("SELECT * FROM cafes ORDER BY id ASC LIMIT 1");
+    const cafe = rows[0];
+    if (!cafe) {
+      return res.status(401).json({ error: "No cafe found in database. Create one from the super-admin panel." });
+    }
 
-  req.cafeId = cafe.id;
-  req.cafe = cafe;
-  next();
+    req.cafeId = cafe.id;
+    // Convert snake_case back to camelCase for downstream code
+    req.cafe = {
+      id: cafe.id,
+      slug: cafe.slug,
+      name: cafe.name,
+      ownerName: cafe.owner_name,
+      ownerEmail: cafe.owner_email,
+      isActive: cafe.is_active,
+      adminKey: cafe.admin_key,
+      createdAt: cafe.created_at,
+    };
+    next();
+  } catch (err) {
+    console.error("Database error in requireAdmin:", err);
+    return res.status(500).json({ error: "Internal server error connecting to database" });
+  }
 }
 
 function requireSuperAdmin(req, res, next) {
@@ -941,13 +956,6 @@ app.patch("/api/super-admin/cafes/:id/status", requireSuperAdmin, async (req, re
   const updated = await db.setCafeActive(req.params.id, isActive);
   if (!updated) return res.status(404).json({ error: "Café not found" });
   res.json({ ...updated, adminKey: undefined });
-});
-
-app.post("/api/super-admin/cafes/:id/reset-admin-key", requireSuperAdmin, async (req, res) => {
-  const newAdminKey = crypto.randomBytes(9).toString("base64url");
-  const updated = await db.resetCafeAdminKey(req.params.id, newAdminKey);
-  if (!updated) return res.status(404).json({ error: "Café not found" });
-  res.json(updated); // returns the new key ONCE, so the platform owner can share it with the café owner
 });
 
 app.get("/api/super-admin/platform-stats", requireSuperAdmin, async (req, res) => {

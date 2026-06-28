@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Café Ordering Platform</title>
+  <link rel="stylesheet" href="/css/admin.css" />
+  <style>
+    body { display:flex; align-items:center; justify-content:center; height:100vh; text-align:center; }
+    .landing-box { max-width: 420px; padding: 2rem; }
+    .landing-links { display:flex; flex-direction:column; gap:0.75rem; margin-top:1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="landing-box">
+    <h1>Café Ordering Platform</h1>
+    <p style="color:var(--text-muted); margin-top:0.5rem;">
+      This is the backend platform for café staff. Customers should never
+      land here directly — they access their café's menu by scanning the
+      QR code on their table.
+    </p>
+    <div class="landing-links">
+      <a href="/admin.html" class="btn btn-primary">Café Admin Login</a>
+      <a href="/super-admin-login.html" class="btn btn-ghost">Super Admin Login</a>
+    </div>
+  </div>
+</body>
+</html>
