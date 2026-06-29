@@ -39,61 +39,65 @@ function renderAdminTables(tables) {
     }
 
     return `
-      <div class="admin-menu-item glass" data-id="${table.id}" style="align-items: flex-start; gap: 1.5rem; flex-wrap: wrap;">
+      <div class="admin-menu-item glass" data-id="${table.id}" style="
+        display: grid;
+        grid-template-columns: 170px 1fr auto;
+        gap: 1.25rem;
+        align-items: start;
+        padding: 1.25rem;
+      ">
 
-        <!-- QR Code — square, white background, borderless, scan-ready -->
+        <!-- Column 1: QR Code — strict 160×160 square -->
         <div style="
-          flex-shrink: 0;
           width: 160px;
           height: 160px;
+          flex-shrink: 0;
           background: #ffffff;
           border-radius: 10px;
           overflow: hidden;
-          box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          box-shadow: 0 0 0 4px rgba(255,255,255,0.12);
         ">
           <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(table.qrUrl)}"
-            alt="QR for ${table.label || table.id}"
-            style="width: 160px; height: 160px; display: block; image-rendering: pixelated;"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=${encodeURIComponent(table.qrUrl)}"
+            alt="QR ${table.label || table.id}"
+            style="width:160px; height:160px; display:block; image-rendering:pixelated;"
           />
         </div>
 
-        <!-- Table info -->
-        <div style="flex: 1; min-width: 180px;">
-          <h4 style="margin-bottom: 0.25rem; font-size: 1.1rem;">${table.label || 'Table ' + table.id}</h4>
-          <p style="margin-bottom: 0.75rem;">
-            <a href="${table.qrUrl}" target="_blank" style="color: var(--gold-light); font-size: 0.8rem; text-decoration: underline; word-break: break-all;">
+        <!-- Column 2: Table info -->
+        <div style="min-width:0; overflow:hidden;">
+          <h4 style="margin:0 0 0.4rem; font-size:1.05rem;">${table.label || 'Table ' + table.id}</h4>
+          <span style="
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+            ${badgeClass === 'badge-success' ? 'background:#28a745;color:#fff;' :
+              badgeClass === 'badge-amber'   ? 'background:#ffc107;color:#000;' :
+                                               'background:#6c757d;color:#fff;'}
+          ">${badgeText}</span>
+          <p style="margin:0; font-size:0.78rem; color:var(--text-muted); word-break:break-all; line-height:1.4;">
+            <a href="${table.qrUrl}" target="_blank" style="color:var(--gold-light); text-decoration:underline;">
               ${table.qrUrl}
             </a>
           </p>
-          <p style="margin-bottom: 0.75rem;">
-            <span style="
-              padding: 4px 10px;
-              border-radius: 4px;
-              font-size: 0.8rem;
-              font-weight: bold;
-              ${badgeClass === 'badge-success' ? 'background:#28a745;color:white;' :
-                badgeClass === 'badge-amber'   ? 'background:#ffc107;color:black;' :
-                                                 'background:#6c757d;color:white;'}
-            ">${badgeText}</span>
-          </p>
         </div>
 
-        <!-- Actions -->
-        <div class="admin-menu-actions" style="flex-direction: column; gap: 0.5rem; align-items: stretch;">
+        <!-- Column 3: Action buttons -->
+        <div style="display:flex; flex-direction:column; gap:0.4rem; align-items:stretch; min-width:130px;">
           ${actionBtn}
-          <a href="${table.qrUrl}" target="_blank" class="btn btn-ghost" style="text-align:center;">Open Table</a>
+          <a href="${table.qrUrl}" target="_blank" class="btn btn-ghost" style="text-align:center; white-space:nowrap;">Open Table</a>
           <a
             href="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(table.qrUrl)}"
-            download="qr-${table.id}.png"
+            download="qr-table-${table.id}.png"
             class="btn btn-ghost"
-            style="text-align:center;"
+            style="text-align:center; white-space:nowrap;"
           >Download QR</a>
-          <button class="btn btn-ghost reset-qr-btn" data-id="${table.id}" style="text-align:center;">Reset QR</button>
+          <button class="btn btn-ghost reset-qr-btn" data-id="${table.id}" style="white-space:nowrap;">Reset QR</button>
         </div>
+
       </div>
     `;
   }).join("");
