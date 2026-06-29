@@ -108,8 +108,15 @@ async function updateCafeInfo(cafeId, partialInfo) {
 // ─── HERO PHOTOS ─────────────────────────────────────────────
 
 async function getHeroPhotos(cafeId) {
-  const { rows } = await pool.query("SELECT filename FROM hero_photos WHERE cafe_id = $1 ORDER BY display_order ASC, id ASC", [cafeId]);
-  return rows.map((r) => r.filename);
+  const { rows } = await pool.query(
+    "SELECT id, filename, display_order FROM hero_photos WHERE cafe_id = $1 ORDER BY display_order ASC, id ASC",
+    [cafeId]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    filename: r.filename,
+    display_order: r.display_order
+  }));
 }
 
 async function addHeroPhoto(cafeId, filename) {
@@ -122,6 +129,26 @@ async function addHeroPhoto(cafeId, filename) {
 
 async function removeHeroPhoto(cafeId, filename) {
   await pool.query("DELETE FROM hero_photos WHERE cafe_id = $1 AND filename = $2", [cafeId, filename]);
+}
+
+async function updateHeroPhotoOrder(cafeId, updates) {
+  // updates is an array of { id, display_order }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const update of updates) {
+      await client.query(
+        "UPDATE hero_photos SET display_order = $1 WHERE cafe_id = $2 AND id = $3",
+        [update.display_order, cafeId, update.id]
+      );
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // ─── MENU ITEMS ──────────────────────────────────────────────
@@ -325,7 +352,7 @@ async function resolveWaiterCall(cafeId, id) {
 module.exports = {
   getAllCafes, getCafeById, getCafeBySlug, getCafeByAdminKey, createCafe, setCafeActive, resetCafeAdminKey,
   getCafeInfo, updateCafeInfo,
-  getHeroPhotos, addHeroPhoto, removeHeroPhoto,
+  getHeroPhotos, addHeroPhoto, removeHeroPhoto, updateHeroPhotoOrder,
   getMenuItems, getMenuItemById, createMenuItem, updateMenuItem, deleteMenuItem,
   getTables, getTableById, createTable, updateTable,
   createOrder, getOrderById, updateOrderStatus, getOrdersInRange, getDistinctOrderDates, getAllOrdersForExport,

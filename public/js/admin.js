@@ -354,12 +354,24 @@ async function loadCafeSettings() {
     document.getElementById("hoursInput").value = cafeInfo.contact?.hours || "";
 
     const grid = document.getElementById("heroPhotosGrid");
+    const saveOrderBtn = document.getElementById("saveHeroOrderBtn");
+    
+    if (heroPhotos.length > 0) {
+      if (saveOrderBtn) saveOrderBtn.style.display = "block";
+    } else {
+      if (saveOrderBtn) saveOrderBtn.style.display = "none";
+    }
+
     grid.innerHTML = heroPhotos
       .map(
         (p) => `
-      <div class="hero-photo-thumb">
-        <img src="/photos/${p}" alt="Hero" />
-        <button type="button" data-name="${p}" class="delete-hero-btn" title="Remove">×</button>
+      <div class="hero-photo-thumb" style="position: relative;">
+        <img src="${p.url}" alt="Hero" />
+        <div style="position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 4px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+          <label style="font-size: 0.7rem; color: white; margin: 0;">Order:</label>
+          <input type="number" class="hero-order-input" data-id="${p.id}" value="${p.display_order}" style="width: 40px; padding: 2px; font-size: 0.8rem; text-align: center; border: none; border-radius: 2px;" />
+        </div>
+        <button type="button" data-name="${p.filename}" class="delete-hero-btn" title="Remove">×</button>
       </div>`
       )
       .join("");
@@ -374,6 +386,49 @@ async function loadCafeSettings() {
         loadCafeSettings();
       });
     });
+    
+    // Add Save Order listener once (prevent duplicates if loadCafeSettings runs multiple times)
+    if (saveOrderBtn && !saveOrderBtn.hasAttribute("data-bound")) {
+      saveOrderBtn.setAttribute("data-bound", "true");
+      saveOrderBtn.addEventListener("click", async () => {
+        const inputs = Array.from(document.getElementById("heroPhotosGrid").querySelectorAll(".hero-order-input"));
+        const maxOrder = inputs.length;
+        
+        const updates = inputs.map(inp => ({
+          id: parseInt(inp.dataset.id, 10),
+          display_order: parseInt(inp.value, 10)
+        }));
+
+        // Validation
+        const seen = new Set();
+        for (const update of updates) {
+          if (isNaN(update.display_order) || update.display_order < 1) {
+            return alert("Priority numbers must be positive (1 or greater).");
+          }
+          if (update.display_order > maxOrder) {
+            return alert(`Priority number cannot be greater than the total number of photos (${maxOrder}).`);
+          }
+          if (seen.has(update.display_order)) {
+            return alert("Priority numbers must be unique. You cannot give the same number to multiple photos.");
+          }
+          seen.add(update.display_order);
+        }
+
+        try {
+          const res = await fetch("/api/admin/hero-photos/order", {
+            method: "PUT",
+            headers: { ...adminHeaders(), "Content-Type": "application/json" },
+            body: JSON.stringify({ updates })
+          });
+          if (!res.ok) throw new Error("Failed to update order");
+          showToast("Carousel order updated successfully!");
+          loadCafeSettings();
+        } catch (err) {
+          console.error(err);
+          alert("Could not update photo order.");
+        }
+      });
+    }
   } catch (err) {
     console.error(err);
   }

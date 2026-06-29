@@ -45,6 +45,9 @@ function scheduleCarouselStep(track, photoCount, state) {
         state.index = 0;
         track.style.transition = "none";
         track.style.transform = "translateX(0)";
+        // Force reflow to apply the transition-none instantly
+        track.offsetHeight;
+        
         requestAnimationFrame(() => {
           track.style.transition = `transform ${SLIDE_TRANSITION_MS}ms ease-in-out`;
           scheduleCarouselStep(track, photoCount, state);
@@ -71,9 +74,9 @@ function buildCarousel(photos) {
 
   track.innerHTML = slides
     .map(
-      (src) => `
+      (photo) => `
       <div class="hero-slide">
-        <img src="${src}" alt="Café interior" loading="lazy" />
+        <img src="${photo.url || photo}" alt="Café interior" loading="lazy" />
       </div>`
     )
     .join("");

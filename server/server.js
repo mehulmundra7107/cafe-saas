@@ -79,24 +79,37 @@ app.use(express.static(path.join(ROOT, "public")));
 app.use("/photos", express.static(PHOTOS_DIR));
 app.use("/uploads/menu", express.static(MENU_IMAGES_DIR));
 
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    const dest = req.uploadDest || MENU_IMAGES_DIR;
-    cb(null, dest);
-  },
-  filename(req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
-    cb(null, `${Date.now()}-${uuidv4().slice(0, 8)}${ext}`);
-  },
-});
+const cloudinary = require("./config/cloudinary");
 
+// Files are now held in memory only, briefly, during the single
+// request — never written to local disk at all. They get streamed
+// directly to Cloudinary inside each route handler below, and the
+// in-memory buffer is discarded immediately after.
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max, reasonable for a menu photo
   fileFilter(req, file, cb) {
     if (/\.(jpe?g|png|webp|gif)$/i.test(file.originalname)) cb(null, true);
     else cb(new Error("Only image files allowed"));
   },
 });
+
+// Uploads an in-memory file buffer to Cloudinary, inside a specific
+// folder (keeps menu photos and hero photos organized separately in
+// your Cloudinary media library, mirroring the old local folder split).
+// Returns the secure HTTPS URL Cloudinary assigns to the uploaded image.
+function uploadBufferToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "image" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
 
 // Resolves which café a public/customer request belongs to, based on
 // a `cafeSlug` query parameter. Customer-facing routes call this
@@ -326,7 +339,7 @@ app.get("/api/cafe", async (req, res) => {
   const heroPhotos = await db.getHeroPhotos(cafe.id);
   res.json({
     cafeInfo,
-    heroPhotos: heroPhotos.map((p) => `/photos/${p}`),
+    heroPhotos: heroPhotos.map((p) => ({ ...p, url: resolveImageUrl(p.filename) })),
   });
 });
 
@@ -341,17 +354,29 @@ app.get("/api/menu", async (req, res) => {
     .filter((i) => i.available !== false)
     .map((item) => ({
       ...item,
-      image: item.image.startsWith("/") ? item.image : resolveImageUrl(item.image),
+      image: resolveImageUrl(item.image),
     }));
   res.json(available);
 });
 
-function resolveImageUrl(filename) {
-  if (fs.existsSync(path.join(MENU_IMAGES_DIR, filename))) {
-    return `/uploads/menu/${filename}`;
+// Cloudinary URLs are already complete, permanent, absolute URLs
+// (e.g. "https://res.cloudinary.com/..."). Anything stored this way
+// needs no resolving at all — just return it as-is. Only OLDER values
+// still referring to a bare local filename (from before this
+// migration, or the original seeded photos still living in the
+// committed photos/ folder) need the old local-path resolution logic.
+function resolveImageUrl(value) {
+  if (!value) return `/photos/photo-01.jpeg`;
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
   }
-  if (fs.existsSync(path.join(PHOTOS_DIR, filename))) {
-    return `/photos/${filename}`;
+
+  if (fs.existsSync(path.join(MENU_IMAGES_DIR, value))) {
+    return `/uploads/menu/${value}`;
+  }
+  if (fs.existsSync(path.join(PHOTOS_DIR, value))) {
+    return `/photos/${value}`;
   }
   return `/photos/photo-01.jpeg`;
 }
@@ -753,47 +778,67 @@ app.get("/api/admin/menu", requireAdmin, async (req, res) => {
   res.json(
     items.map((item) => ({
       ...item,
-      image: item.image.startsWith("/") ? item.image : resolveImageUrl(item.image),
+      image: resolveImageUrl(item.image),
     }))
   );
 });
 
 app.post("/api/admin/menu", requireAdmin, upload.single("image"), async (req, res) => {
-  const { name, price, description, category, available } = req.body;
-  const item = {
-    id: uuidv4(),
-    name: name || "Untitled",
-    price: parseFloat(price) || 0,
-    description: description || "",
-    image: req.file ? req.file.filename : "photo-01.jpeg",
-    category: category || "General",
-    available: available !== "false",
-    inStock: req.body.inStock !== "false",
-  };
-  const saved = await db.createMenuItem(req.cafeId, item);
-  const items = await db.getMenuItems(req.cafeId);
-  emitAll("menu:updated", items);
-  res.status(201).json({ ...saved, image: resolveImageUrl(saved.image) });
+  try {
+    let imageUrl = null;
+    if (req.file) {
+      imageUrl = await uploadBufferToCloudinary(req.file.buffer, "cafe-menu-items");
+    }
+
+    const { name, price, description, category, available } = req.body;
+    const item = {
+      id: uuidv4(),
+      name: name || "Untitled",
+      price: parseFloat(price) || 0,
+      description: description || "",
+      image: imageUrl || "photo-01.jpeg",
+      category: category || "General",
+      available: available !== "false",
+      inStock: req.body.inStock !== "false",
+    };
+    const saved = await db.createMenuItem(req.cafeId, item);
+    const items = await db.getMenuItems(req.cafeId);
+    emitAll("menu:updated", items);
+    res.status(201).json({ ...saved, image: resolveImageUrl(saved.image) });
+  } catch (err) {
+    console.error("Failed to create menu item:", err);
+    res.status(500).json({ error: "Failed to upload image or save menu item" });
+  }
 });
 
 app.put("/api/admin/menu/:id", requireAdmin, upload.single("image"), async (req, res) => {
-  const { name, price, description, category, available, inStock } = req.body;
-  
-  const fields = {};
-  if (name !== undefined) fields.name = name;
-  if (price !== undefined) fields.price = parseFloat(price);
-  if (description !== undefined) fields.description = description;
-  if (category !== undefined) fields.category = category;
-  if (available !== undefined) fields.available = available !== "false";
-  if (inStock !== undefined) fields.inStock = inStock !== "false";
-  if (req.file) fields.image = req.file.filename;
+  try {
+    let imageUrl;
+    if (req.file) {
+      imageUrl = await uploadBufferToCloudinary(req.file.buffer, "cafe-menu-items");
+    }
 
-  const updated = await db.updateMenuItem(req.cafeId, req.params.id, fields);
-  if (!updated) return res.status(404).json({ error: "Not found" });
+    const { name, price, description, category, available, inStock } = req.body;
+    
+    const fields = {};
+    if (name !== undefined) fields.name = name;
+    if (price !== undefined) fields.price = parseFloat(price);
+    if (description !== undefined) fields.description = description;
+    if (category !== undefined) fields.category = category;
+    if (available !== undefined) fields.available = available !== "false";
+    if (inStock !== undefined) fields.inStock = inStock !== "false";
+    if (imageUrl) fields.image = imageUrl;
 
-  const items = await db.getMenuItems(req.cafeId);
-  emitAll("menu:updated", items);
-  res.json({ ...updated, image: resolveImageUrl(updated.image) });
+    const updated = await db.updateMenuItem(req.cafeId, req.params.id, fields);
+    if (!updated) return res.status(404).json({ error: "Not found" });
+
+    const items = await db.getMenuItems(req.cafeId);
+    emitAll("menu:updated", items);
+    res.json({ ...updated, image: resolveImageUrl(updated.image) });
+  } catch (err) {
+    console.error("Failed to update menu item:", err);
+    res.status(500).json({ error: "Failed to upload image or update menu item" });
+  }
 });
 
 app.delete("/api/admin/menu/:id", requireAdmin, async (req, res) => {
@@ -809,7 +854,7 @@ app.get("/api/admin/cafe", requireAdmin, async (req, res) => {
   const heroPhotos = await db.getHeroPhotos(req.cafeId);
   res.json({
     cafeInfo,
-    heroPhotos,
+    heroPhotos: heroPhotos.map((p) => ({ ...p, url: resolveImageUrl(p.filename) })),
   });
 });
 
@@ -821,18 +866,40 @@ app.put("/api/admin/cafe", requireAdmin, async (req, res) => {
 
 app.get("/api/admin/hero-photos", requireAdmin, async (req, res) => {
   const photos = await db.getHeroPhotos(req.cafeId);
-  res.json(photos);
+  res.json(photos.map(p => ({ ...p, url: resolveImageUrl(p.filename) })));
 });
 
-app.post("/api/admin/hero-photos", requireAdmin, (req, res, next) => {
-  req.uploadDest = PHOTOS_DIR;
-  next();
-}, upload.single("image"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No image" });
-  await db.addHeroPhoto(req.cafeId, req.file.filename);
-  const photos = await db.getHeroPhotos(req.cafeId);
-  emitAll("hero:updated", photos);
-  res.status(201).json({ filename: req.file.filename, url: `/photos/${req.file.filename}` });
+app.post("/api/admin/hero-photos", requireAdmin, upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No image" });
+
+    const imageUrl = await uploadBufferToCloudinary(req.file.buffer, "cafe-hero-photos");
+
+    await db.addHeroPhoto(req.cafeId, imageUrl);
+    const photos = await db.getHeroPhotos(req.cafeId);
+    const mapped = photos.map(p => ({ ...p, url: resolveImageUrl(p.filename) }));
+    emitAll("hero:updated", mapped);
+    res.status(201).json({ url: imageUrl });
+  } catch (err) {
+    console.error("Failed to upload hero photo:", err);
+    res.status(500).json({ error: "Failed to upload hero photo" });
+  }
+});
+
+app.put("/api/admin/hero-photos/order", requireAdmin, async (req, res) => {
+  try {
+    const { updates } = req.body; // array of { id, display_order }
+    if (!Array.isArray(updates)) return res.status(400).json({ error: "Invalid updates format" });
+    
+    await db.updateHeroPhotoOrder(req.cafeId, updates);
+    const photos = await db.getHeroPhotos(req.cafeId);
+    const mapped = photos.map(p => ({ ...p, url: resolveImageUrl(p.filename) }));
+    emitAll("hero:updated", mapped);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to update hero photo order:", err);
+    res.status(500).json({ error: "Failed to update order" });
+  }
 });
 
 app.delete("/api/admin/hero-photos/:filename", requireAdmin, async (req, res) => {
@@ -850,7 +917,8 @@ app.delete("/api/admin/hero-photos/:filename", requireAdmin, async (req, res) =>
 
   await db.removeHeroPhoto(req.cafeId, name);
   const photos = await db.getHeroPhotos(req.cafeId);
-  emitAll("hero:updated", photos);
+  const mapped = photos.map(p => ({ ...p, url: resolveImageUrl(p.filename) }));
+  emitAll("hero:updated", mapped);
   res.json({ ok: true });
 });
 
