@@ -211,4 +211,49 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Could not reset QR codes. Please try again.");
     }
   });
+  document.getElementById("downloadAllQrBtn")?.addEventListener("click", async () => {
+    try {
+      const res = await fetch("/api/admin/tables", { headers: adminHeaders() });
+      if (!res.ok) throw new Error("Failed to load tables for PDF");
+      const tables = await res.json();
+
+      if (!tables || tables.length === 0) {
+        return alert("No tables found to generate QR codes.");
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      tables.forEach((table, index) => {
+        if (index > 0) doc.addPage();
+
+        // Title
+        doc.setFontSize(28);
+        doc.setFont("helvetica", "bold");
+        doc.text(table.label || `Table ${table.id}`, 105, 40, { align: "center" });
+
+        // Generate QR code base64
+        const qr = new QRious({
+          value: table.qrUrl,
+          size: 500,
+          level: "H"
+        });
+        const qrDataUrl = qr.toDataURL("image/jpeg");
+
+        // Add QR to PDF (x, y, width, height)
+        // A4 width is 210mm. Centered 120mm QR starts at (210-120)/2 = 45mm
+        doc.addImage(qrDataUrl, "JPEG", 45, 60, 120, 120);
+        
+        // Footer text
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "normal");
+        doc.text("Scan to order", 105, 200, { align: "center" });
+      });
+
+      doc.save("Cafe-Tables-QR-Codes.pdf");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate PDF. Check console for details.");
+    }
+  });
 });
