@@ -219,4 +219,26 @@ function clearActiveOrder() {
   // For safety, let's keep it but just return.
 }
 
-document.addEventListener("DOMContentLoaded", updateCartBadge);
+document.addEventListener("DOMContentLoaded", () => {
+  updateCartBadge();
+
+  // Rewrite hardcoded navigation links to include the current café's slug.
+  // This ensures that when a customer clicks "Home" or "Menu", they stay
+  // within their specific café's experience (e.g. /c/cafe-crafted/menu)
+  // instead of falling back to the root platform paths.
+  const prefix = `/c/${CAFE_SLUG}`;
+  document.querySelectorAll("a").forEach(a => {
+    const href = a.getAttribute("href");
+    if (!href) return;
+    
+    if (href === "/") {
+      a.setAttribute("href", prefix);
+    } else if (href === "/menu.html") {
+      a.setAttribute("href", `${prefix}/menu`);
+    } else if (href === "/cart.html") {
+      a.setAttribute("href", `${prefix}/cart`);
+    } else if (href === "/orders.html") {
+      a.setAttribute("href", `${prefix}/orders`);
+    }
+  });
+});
