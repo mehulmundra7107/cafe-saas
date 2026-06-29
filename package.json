@@ -8,9 +8,11 @@
     "dev": "node server/server.js",
     "db:migrate": "node server/db/migrate.js",
     "db:seed-from-json": "node server/db/migrate-data-from-json.js",
-    "db:migrate-multi-tenant": "node server/db/migrate-add-cafe-id.js"
+    "db:migrate-multi-tenant": "node server/db/migrate-add-cafe-id.js",
+    "set-super-admin-password": "node server/db/set-super-admin-password.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "express-rate-limit": "^8.5.2",

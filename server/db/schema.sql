@@ -109,3 +109,19 @@ CREATE TABLE IF NOT EXISTS waiter_calls (
 
 CREATE INDEX IF NOT EXISTS idx_waiter_calls_resolved ON waiter_calls (resolved);
 CREATE INDEX IF NOT EXISTS idx_waiter_calls_cafe_resolved ON waiter_calls (cafe_id, resolved);
+
+-- ───────────────────────────────────────────────────────────
+-- SUPER ADMIN SETTINGS (a single row holding the hashed
+-- platform-owner password — there is exactly one super admin)
+-- ───────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS super_admin_settings (
+  id              SERIAL PRIMARY KEY,
+  password_hash   TEXT NOT NULL,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- NOTE: cafes.admin_key now stores a bcrypt HASH, not a plain password.
+-- This is enforced by application code (server.js), not a database
+-- constraint, since Postgres has no way to validate hash format at
+-- the column level. See server.js's requireAdmin and the café
+-- creation/reset-key routes for where hashing is applied.

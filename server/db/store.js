@@ -1,4 +1,5 @@
 const pool = require("./pool");
+const bcrypt = require("bcrypt");
 
 // ─── CAFES ───────────────────────────────────────────────────
 
@@ -30,16 +31,24 @@ async function getCafeBySlug(slug) {
   return rows.length ? mapCafeRow(rows[0]) : null;
 }
 
+// Since admin_key is now a bcrypt hash, we cannot look up a café directly
+// by plain-text key via a WHERE clause. Instead we check the provided key
+// against every active café's stored hash individually.
 async function getCafeByAdminKey(adminKey) {
-  const { rows } = await pool.query("SELECT * FROM cafes WHERE admin_key = $1 AND is_active = true", [adminKey]);
-  return rows.length ? mapCafeRow(rows[0]) : null;
+  const { rows } = await pool.query("SELECT * FROM cafes WHERE is_active = true");
+  for (const row of rows) {
+    const matches = await bcrypt.compare(adminKey, row.admin_key);
+    if (matches) return mapCafeRow(row);
+  }
+  return null;
 }
 
 async function createCafe({ slug, name, ownerName, ownerEmail, adminKey }) {
+  const hashedKey = await bcrypt.hash(adminKey, 12);
   const { rows } = await pool.query(
     `INSERT INTO cafes (slug, name, owner_name, owner_email, admin_key)
      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [slug, name, ownerName, ownerEmail, adminKey]
+    [slug, name, ownerName, ownerEmail, hashedKey]
   );
   return mapCafeRow(rows[0]);
 }
@@ -53,9 +62,10 @@ async function setCafeActive(id, isActive) {
 }
 
 async function resetCafeAdminKey(id, newAdminKey) {
+  const hashedKey = await bcrypt.hash(newAdminKey, 12);
   const { rows } = await pool.query(
     "UPDATE cafes SET admin_key = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
-    [newAdminKey, id]
+    [hashedKey, id]
   );
   return rows.length ? mapCafeRow(rows[0]) : null;
 }

@@ -6,6 +6,7 @@ const multer = require("multer");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 const PDFDocument = require("pdfkit");
 const db = require("./db/store");
 const pool = require("./db/pool");
@@ -18,8 +19,6 @@ const io = new Server(server);
 const ROOT = path.join(__dirname, "..");
 const PHOTOS_DIR = path.join(ROOT, "photos");
 const MENU_IMAGES_DIR = path.join(ROOT, "uploads", "menu");
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || "superadmin123";
 const TABLE_TOKEN_SECRET =
   process.env.TABLE_TOKEN_SECRET || "change-this-in-production-please";
 // In production, set TABLE_TOKEN_SECRET as a real environment variable.
@@ -27,22 +26,13 @@ const TABLE_TOKEN_SECRET =
 // without this exact secret cannot produce a token that passes
 // verification, no matter what tableId or version they try to guess.
 
-const usingInsecureDefaults = [];
-if (!process.env.ADMIN_PASSWORD) usingInsecureDefaults.push("ADMIN_PASSWORD");
-if (!process.env.SUPER_ADMIN_PASSWORD) usingInsecureDefaults.push("SUPER_ADMIN_PASSWORD");
-if (!process.env.TABLE_TOKEN_SECRET) usingInsecureDefaults.push("TABLE_TOKEN_SECRET");
-
-if (usingInsecureDefaults.length > 0) {
-  console.warn("\n⚠️  WARNING: The following secrets are using INSECURE DEFAULT values");
-  console.warn("⚠️  because they are not set in your environment:");
-  usingInsecureDefaults.forEach((name) => console.warn(`⚠️    - ${name}`));
-  console.warn("⚠️  Set these in your .env file (local) or your hosting platform's");
-  console.warn("⚠️  environment variables (production) before going live.\n");
+if (!process.env.TABLE_TOKEN_SECRET) {
+  console.warn("\n⚠️  WARNING: TABLE_TOKEN_SECRET is using an insecure default value.");
+  console.warn("⚠️  Set it in your .env file (local) or hosting platform env vars (production).\n");
 }
 
-if (process.env.NODE_ENV === "production" && usingInsecureDefaults.length > 0) {
-  console.error("❌ Refusing to start in production with insecure default secrets.");
-  console.error("❌ Missing:", usingInsecureDefaults.join(", "));
+if (process.env.NODE_ENV === "production" && !process.env.TABLE_TOKEN_SECRET) {
+  console.error("❌ Refusing to start in production without TABLE_TOKEN_SECRET.");
   process.exit(1);
 }
 
@@ -67,6 +57,11 @@ app.use("/api", publicLimiter);
 // cart.html, orders.html, and all CSS/JS/images exactly as before —
 // those pages will read the cafeSlug from the URL using the helper
 // added in Task D2.
+// Root — serve the platform landing page (staff-facing links to Admin & Super Admin)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(ROOT, "public", "index-landing.html"));
+});
+
 app.get("/c/:cafeSlug", (req, res) => {
   res.sendFile(path.join(ROOT, "public", "index.html"));
 });
@@ -113,47 +108,51 @@ async function resolveCafeBySlug(req) {
   return db.getCafeBySlug(slug);
 }
 
-// Looks up which café this admin request belongs to, based on its
-// admin key, and attaches it to the request for every downstream
-// handler to use. This replaces the old single-password model — every
+// Looks up which café this admin request belongs to using bcrypt hash
+// comparison against each active café's stored admin_key hash.
 async function requireAdmin(req, res, next) {
   try {
     const key = req.headers["x-admin-key"] || req.query.key;
-    if (!key || key !== ADMIN_PASSWORD) {
+    if (!key) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { rows } = await pool.query("SELECT * FROM cafes ORDER BY id ASC LIMIT 1");
-    const cafe = rows[0];
+    const cafe = await db.getCafeByAdminKey(key);
     if (!cafe) {
-      return res.status(401).json({ error: "No cafe found in database. Create one from the super-admin panel." });
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     req.cafeId = cafe.id;
-    // Convert snake_case back to camelCase for downstream code
-    req.cafe = {
-      id: cafe.id,
-      slug: cafe.slug,
-      name: cafe.name,
-      ownerName: cafe.owner_name,
-      ownerEmail: cafe.owner_email,
-      isActive: cafe.is_active,
-      adminKey: cafe.admin_key,
-      createdAt: cafe.created_at,
-    };
+    req.cafe = cafe;
     next();
   } catch (err) {
-    console.error("Database error in requireAdmin:", err);
-    return res.status(500).json({ error: "Internal server error connecting to database" });
+    console.error("Admin auth error:", err);
+    res.status(500).json({ error: "Authentication error" });
   }
 }
 
-function requireSuperAdmin(req, res, next) {
-  const key = req.headers["x-super-admin-key"] || req.query.key;
-  if (key !== SUPER_ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Unauthorized" });
+async function requireSuperAdmin(req, res, next) {
+  try {
+    const key = req.headers["x-super-admin-key"] || req.query.key;
+    if (!key) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { rows } = await pool.query("SELECT password_hash FROM super_admin_settings LIMIT 1");
+    if (!rows.length) {
+      return res.status(401).json({ error: "Super admin password has not been set up yet. Run: npm run set-super-admin-password -- YourPassword" });
+    }
+
+    const isValid = await bcrypt.compare(key, rows[0].password_hash);
+    if (!isValid) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    next();
+  } catch (err) {
+    console.error("Super admin auth error:", err);
+    res.status(500).json({ error: "Authentication error" });
   }
-  next();
 }
 
 function generateSessionId() {
@@ -861,12 +860,28 @@ app.get("/api/admin/check", requireAdmin, (req, res) => {
 
 // ─── SUPER ADMIN: PLATFORM-WIDE ROUTES ──────────────────────
 
-app.post("/api/super-admin/login", authLimiter, (req, res) => {
-  const { key } = req.body;
-  if (key !== SUPER_ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Incorrect key" });
+app.post("/api/super-admin/login", authLimiter, async (req, res) => {
+  try {
+    const { key } = req.body;
+    if (!key) {
+      return res.status(400).json({ error: "Password is required" });
+    }
+
+    const { rows } = await pool.query("SELECT password_hash FROM super_admin_settings LIMIT 1");
+    if (!rows.length) {
+      return res.status(401).json({ error: "Super admin password has not been set up yet." });
+    }
+
+    const isValid = await bcrypt.compare(key, rows[0].password_hash);
+    if (!isValid) {
+      return res.status(401).json({ error: "Incorrect password" });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Super admin login error:", err);
+    res.status(500).json({ error: "Login error" });
   }
-  res.json({ success: true });
 });
 
 app.get("/api/super-admin/cafes", requireSuperAdmin, async (req, res) => {
@@ -958,6 +973,27 @@ app.patch("/api/super-admin/cafes/:id/status", requireSuperAdmin, async (req, re
   res.json({ ...updated, adminKey: undefined });
 });
 
+app.post("/api/super-admin/cafes/:id/reset-admin-key", requireSuperAdmin, async (req, res) => {
+  const { newPassword } = req.body;
+
+  let plainKeyToReturn;
+  if (newPassword) {
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters." });
+    }
+    plainKeyToReturn = newPassword;
+  } else {
+    plainKeyToReturn = crypto.randomBytes(9).toString("base64url");
+  }
+
+  const updated = await db.resetCafeAdminKey(req.params.id, plainKeyToReturn);
+  if (!updated) return res.status(404).json({ error: "Café not found" });
+
+  // Return the PLAIN password once so it can be shared with the café owner.
+  // It is never stored or logged anywhere in plain form after this response.
+  res.json({ ...updated, adminKey: plainKeyToReturn });
+});
+
 app.get("/api/super-admin/platform-stats", requireSuperAdmin, async (req, res) => {
   const cafes = await db.getAllCafes();
   const bounds = getQuickRangeBounds("today");
@@ -985,5 +1021,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Café server running at http://localhost:${PORT}`);
   console.log(`Admin panel: http://localhost:${PORT}/admin.html`);
-  console.log(`Default admin password: ${ADMIN_PASSWORD}`);
 });

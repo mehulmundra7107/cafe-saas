@@ -36,6 +36,7 @@ async function loadCafeDetail() {
 
     <div style="display:flex; gap:0.5rem; margin:1rem 0;">
       <button class="btn btn-ghost" id="toggleActiveBtn">${cafe.isActive ? "Deactivate" : "Activate"} Café</button>
+      <button class="btn btn-ghost" id="resetKeyBtn">Reset Admin Password</button>
     </div>
 
     <div class="stats-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0;">
@@ -66,6 +67,30 @@ async function loadCafeDetail() {
     loadCafeDetail();
   });
 
+  document.getElementById("resetKeyBtn").addEventListener("click", async () => {
+    const chosen = prompt(
+      "Enter a new password for this café's admin login (at least 8 characters),\n" +
+      "or leave blank to generate a random secure password instead:"
+    );
+
+    // User clicked Cancel
+    if (chosen === null) return;
+
+    if (chosen && chosen.length < 8) {
+      alert("Password must be at least 8 characters. Please try again.");
+      return;
+    }
+
+    const res = await fetch(`/api/super-admin/cafes/${id}/reset-admin-key`, {
+      method: "POST",
+      headers: { ...superAdminHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ newPassword: chosen || undefined }),
+    });
+    const updated = await res.json();
+    alert(
+      `New admin password for this café:\n\n${updated.adminKey}\n\nShare this with the café owner — it will not be shown again.`
+    );
+  });
 
 }
 

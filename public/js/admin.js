@@ -430,5 +430,6 @@ document.getElementById("loginForm").addEventListener("submit", (e) => {
 document.getElementById("logoutBtn").addEventListener("click", logout);
 
 (async () => {
-  if (await checkAuth()) showAdmin();
+  const result = await checkAuth();
+  if (result.ok) showAdmin();
 })();

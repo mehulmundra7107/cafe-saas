@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")"
 
 echo "============================================"
-echo "  Golden Wicker Cafe - Starting Server"
+echo "  CAFE CRAFTED - Starting Server"
 echo "============================================"
 echo
 
@@ -32,10 +32,10 @@ echo
 sleep 2
 
 if command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "http://localhost:3000/?table=1" >/dev/null 2>&1 &
+  xdg-open "http://localhost:3000/" >/dev/null 2>&1 &
   xdg-open "http://localhost:3000/admin.html" >/dev/null 2>&1 &
 elif command -v gnome-open >/dev/null 2>&1; then
-  gnome-open "http://localhost:3000/?table=1" >/dev/null 2>&1 &
+  gnome-open "http://localhost:3000/" >/dev/null 2>&1 &
   gnome-open "http://localhost:3000/admin.html" >/dev/null 2>&1 &
 fi
 
