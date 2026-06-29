@@ -1,7 +1,9 @@
 node_modules/
 .env
-uploads/
-photos/
 _temp/
 *.log
 .DS_Store
+
+# Keep photos/ and uploads/ tracked so Render has the seed images
+# Note: on Render free tier, newly uploaded images will not persist
+# across deploys. Use cloud storage (Cloudinary etc.) for production.

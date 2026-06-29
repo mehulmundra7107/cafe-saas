@@ -38,30 +38,61 @@ function renderAdminTables(tables) {
       }
     }
 
-    // Since Part A styles might be missing, adding basic inline styles or reusing existing classes
     return `
-      <div class="admin-menu-item glass" data-id="${table.id}" style="align-items: flex-start; gap: 1.5rem;">
-        <div style="flex-shrink: 0; background: white; padding: 0.5rem; border-radius: 8px;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(table.qrUrl)}" alt="QR Code for Table ${table.label}" style="width: 120px; height: 120px; display: block;" />
+      <div class="admin-menu-item glass" data-id="${table.id}" style="align-items: flex-start; gap: 1.5rem; flex-wrap: wrap;">
+
+        <!-- QR Code — square, white background, borderless, scan-ready -->
+        <div style="
+          flex-shrink: 0;
+          width: 160px;
+          height: 160px;
+          background: #ffffff;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 0 0 4px rgba(255,255,255,0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(table.qrUrl)}"
+            alt="QR for ${table.label || table.id}"
+            style="width: 160px; height: 160px; display: block; image-rendering: pixelated;"
+          />
         </div>
-        <div style="flex: 1;">
-          <h4 style="margin-bottom: 0.25rem;">Table ${table.label || table.id}</h4>
+
+        <!-- Table info -->
+        <div style="flex: 1; min-width: 180px;">
+          <h4 style="margin-bottom: 0.25rem; font-size: 1.1rem;">${table.label || 'Table ' + table.id}</h4>
           <p style="margin-bottom: 0.75rem;">
-            <a href="${table.qrUrl}" target="_blank" style="color: var(--gold-light); font-size: 0.85rem; text-decoration: underline; word-break: break-all;">
+            <a href="${table.qrUrl}" target="_blank" style="color: var(--gold-light); font-size: 0.8rem; text-decoration: underline; word-break: break-all;">
               ${table.qrUrl}
             </a>
           </p>
-          <p><span style="padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; 
-             ${badgeClass === 'badge-success' ? 'background: #28a745; color: white;' : 
-               badgeClass === 'badge-amber' ? 'background: #ffc107; color: black;' : 
-               'background: #6c757d; color: white;'}">
-            ${badgeText}
-          </span></p>
+          <p style="margin-bottom: 0.75rem;">
+            <span style="
+              padding: 4px 10px;
+              border-radius: 4px;
+              font-size: 0.8rem;
+              font-weight: bold;
+              ${badgeClass === 'badge-success' ? 'background:#28a745;color:white;' :
+                badgeClass === 'badge-amber'   ? 'background:#ffc107;color:black;' :
+                                                 'background:#6c757d;color:white;'}
+            ">${badgeText}</span>
+          </p>
         </div>
-        <div class="admin-menu-actions" style="flex-direction: column; gap: 0.5rem;">
+
+        <!-- Actions -->
+        <div class="admin-menu-actions" style="flex-direction: column; gap: 0.5rem; align-items: stretch;">
           ${actionBtn}
-          <a href="${table.qrUrl}" target="_blank" class="btn btn-ghost" style="text-align: center;">Open Table</a>
-          <button class="btn btn-ghost reset-qr-btn" data-id="${table.id}" style="text-align: center;">Reset QR</button>
+          <a href="${table.qrUrl}" target="_blank" class="btn btn-ghost" style="text-align:center;">Open Table</a>
+          <a
+            href="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(table.qrUrl)}"
+            download="qr-${table.id}.png"
+            class="btn btn-ghost"
+            style="text-align:center;"
+          >Download QR</a>
+          <button class="btn btn-ghost reset-qr-btn" data-id="${table.id}" style="text-align:center;">Reset QR</button>
         </div>
       </div>
     `;
